@@ -38,7 +38,7 @@ The endpoint  return a 200 OK status code with the statistics or a 404 Not Found
 
 ## 📈 Project Status
 
-> **Current Phase:** In progress
+> **Current Phase:** Finished
 
 ## ⚙️ Installation & Setup
 
