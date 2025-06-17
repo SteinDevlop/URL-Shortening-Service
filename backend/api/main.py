@@ -16,9 +16,7 @@ add_middlewares(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:49607",  # solo si aún pruebas en local
-    ],
+allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

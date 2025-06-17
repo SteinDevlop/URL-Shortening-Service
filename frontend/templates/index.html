@@ -1,16 +1,296 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Inicio</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel="stylesheet" href="index.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>URL Shortening Service</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .title {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #4285F4;
+      margin-bottom: 1rem;
+    }
+    input[type="url"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.3s;
+    }
+    input[type="url"]:focus {
+      border-color: #4285F4;
+    }
+    .main-button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #4285F4;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: background 0.3s;
+    }
+    .main-button:hover {
+      background: #3367D6;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: space-between;
+    }
+    .action-button {
+      flex: 1 1 45%;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      text-align: center;
+      user-select: none;
+      transition: background 0.3s;
+    }
+    .retrieve { background: #0F9D58; }
+    .retrieve:hover { background: #0B8043; }
+    .update { background: #F4B400; color: #333; }
+    .update:hover { background: #DBA307; }
+    .delete { background: #DB4437; }
+    .delete:hover { background: #C1351D; }
+    .stats { background: #AB47BC; }
+    .stats:hover { background: #9C27B0; }
+
+    .result {
+      background: #eef3fb;
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: #333;
+      white-space: pre-wrap;
+      min-height: 50px;
+      user-select: text;
+    }
+    a.short-url {
+      color: #4285F4;
+      font-weight: bold;
+      text-decoration: none;
+      word-break: break-all;
+    }
+  </style>
 </head>
 <body>
-    <button onclick="window.location.href = 'http://localhost:8080/templates/create.html';">Create URL</button>
-    <button onclick="window.location.href = 'http://localhost:8080/templates/retrive.html';">Retrieve an original URL from a short URL</button>
-    <button onclick="window.location.href = 'http://localhost:8080/templates/update.html';">Update an existing short URL</button>
-    <button onclick="window.location.href = 'http://localhost:8080/templates/stats.html';">Get statistics on the short URLL</button>
+  <div class="container">
+    <div class="title">URL Shortening Service</div>
+    <input type="url" placeholder="Enter URL to shorten" id="inputUrl" />
+    <button class="main-button" id="btnShorten">Shorten URL</button>
+
+    <div class="actions">
+      <button class="action-button retrieve" id="btnRetrieve">Retrieve Original URL</button>
+      <button class="action-button update" id="btnUpdate">Update Short URL</button>
+      <button class="action-button delete" id="btnDelete">Delete Short URL</button>
+      <button class="action-button stats" id="btnStats">Get Statistics</button>
+    </div>
+
+    <div class="result" id="resultArea">Results will appear here...</div>
+  </div>
+
+  <script>
+    const api = 'http://127.0.0.1:8000';
+    const apiBase = 'http://127.0.0.1:8000/shorten';
+
+    const resultArea = document.getElementById('resultArea');
+    const inputUrl = document.getElementById('inputUrl');
+
+    // Mostrar resultado en pantalla
+    function showResult(text, isError = false) {
+      resultArea.textContent = text;
+      resultArea.style.color = isError ? 'red' : '#333';
+    }
+
+    // Construir URL corta completa
+    function buildShortUrl(shortCode) {
+      return `${api}/${shortCode}`;
+    }
+
+    // POST para crear URL corta
+    document.getElementById('btnShorten').addEventListener('click', async () => {
+      const url = inputUrl.value.trim();
+      if (!url) {
+        showResult('Please enter a valid URL.', true);
+        return;
+      }
+
+      showResult('Creating short URL...');
+
+      try {
+        // Según la spec la API espera application/x-www-form-urlencoded
+        const formData = new URLSearchParams();
+        formData.append('Url', url);
+
+        const response = await fetch(apiBase + '/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.UrlShort) {
+            const shortUrl = buildShortUrl(data.UrlShort);
+            showResult(`Short URL created:\n${shortUrl}`);
+
+            // Opcional: limpiar input
+            inputUrl.value = '';
+          } else {
+            showResult('Short URL not returned by API.', true);
+          }
+        } else {
+          const err = await response.json();
+          showResult(`Error: ${JSON.stringify(err)}`, true);
+        }
+      } catch (error) {
+        showResult(`Request failed: ${error.message}`, true);
+      }
+    });
+
+    // GET para recuperar URL original
+    document.getElementById('btnRetrieve').addEventListener('click', async () => {
+      const shortCode = prompt('Enter the short code (e.g. abc123):');
+      if (!shortCode) return;
+      showResult('Retrieving original URL...');
+      try {
+        const params = new URLSearchParams({ short_url: shortCode });
+        const response = await fetch(`${apiBase}/?${params.toString()}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.UrlOriginal) {
+            showResult(`Original URL:\n${data.UrlOriginal}`);
+          } else {
+            showResult('Original URL not found in response.', true);
+          }
+        } else {
+          showResult('Short URL not found.', true);
+        }
+      } catch (error) {
+        showResult(`Request failed: ${error.message}`, true);
+      }
+    });
+
+    // PUT para actualizar URL original
+    document.getElementById('btnUpdate').addEventListener('click', async () => {
+      const shortCode = prompt('Enter the short code to update:');
+      if (!shortCode) return;
+      const newUrl = prompt('Enter the new original URL:');
+      if (!newUrl) return;
+
+      showResult('Updating URL...');
+      try {
+        const formData = new URLSearchParams();
+        formData.append('New_UrlShort', newUrl);
+
+        const response = await fetch(`${apiBase}/${encodeURIComponent(shortCode)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.url) {
+            showResult(`URL updated to:\n${data.url}`);
+          } else {
+            showResult('URL updated but response missing updated URL.', true);
+          }
+        } else {
+          const err = await response.json();
+          showResult(`Error: ${JSON.stringify(err)}`, true);
+        }
+      } catch (error) {
+        showResult(`Request failed: ${error.message}`, true);
+      }
+    });
+
+    // DELETE para borrar short URL
+    document.getElementById('btnDelete').addEventListener('click', async () => {
+      const shortCode = prompt('Enter the short code to delete:');
+      if (!shortCode) return;
+
+      showResult('Deleting short URL...');
+      try {
+        // La API espera application/x-www-form-urlencoded con short_url en body (según spec)
+        const formData = new URLSearchParams();
+        formData.append('short_url', shortCode);
+
+        const response = await fetch(apiBase + '/', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString(),
+        });
+
+        if (response.status === 204) {
+          showResult('Short URL deleted successfully.');
+        } else {
+          const err = await response.json();
+          showResult(`Error: ${JSON.stringify(err)}`, true);
+        }
+      } catch (error) {
+        showResult(`Request failed: ${error.message}`, true);
+      }
+    });
+
+    // GET para obtener estadísticas
+    document.getElementById('btnStats').addEventListener('click', async () => {
+      const shortCode = prompt('Enter the short code:');
+      if (!shortCode) return;
+
+      showResult('Fetching statistics...');
+      try {
+        const response = await fetch(`${apiBase}/${encodeURIComponent(shortCode)}/stats`);
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // Asumo que la respuesta tiene propiedades url y accessCount
+          if (data.url && data.accessCount !== undefined) {
+            showResult(`Statistics for ${shortCode}:\nURL: ${data.url}\nAccess Count: ${data.accessCount}`);
+          } else {
+            showResult('Statistics data missing or incomplete.', true);
+          }
+        } else {
+          showResult('Short URL not found.', true);
+        }
+      } catch (error) {
+        showResult(`Request failed: ${error.message}`, true);
+      }
+    });
+  </script>
 </body>
 </html>
