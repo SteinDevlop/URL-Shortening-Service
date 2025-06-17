@@ -224,8 +224,8 @@
 
         if (response.ok) {
           const data = await response.json();
-          if (data.url) {
-            showResult(`URL updated to:\n${data.url}`);
+          if (data.UrlShort) {
+            showResult(`URL updated to:\n${data.UrlShort}`);
           } else {
             showResult('URL updated but response missing updated URL.', true);
           }
@@ -277,13 +277,8 @@
 
         if (response.ok) {
           const data = await response.json();
-
+          showResult(`Statistics for ${shortCode}:\nURL: ${data.UrlOriginal}\nAccess Count: ${data.TimesAccess}`);
           // Asumo que la respuesta tiene propiedades url y accessCount
-          if (data.url && data.accessCount !== undefined) {
-            showResult(`Statistics for ${shortCode}:\nURL: ${data.url}\nAccess Count: ${data.accessCount}`);
-          } else {
-            showResult('Statistics data missing or incomplete.', true);
-          }
         } else {
           showResult('Short URL not found.', true);
         }

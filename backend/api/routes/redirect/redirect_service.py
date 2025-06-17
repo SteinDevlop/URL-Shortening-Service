@@ -1,9 +1,8 @@
 import logging
 from fastapi import (
-    Form, HTTPException, APIRouter,Query
+    HTTPException, APIRouter
 )
-import datetime
-from backend.models.url import UrlCreate, UrlOut
+from backend.models.url import UrlOut
 from backend.logic.universal_controller_instance import universal_controller as controller
 from fastapi import status
 from fastapi.responses import RedirectResponse
@@ -30,7 +29,8 @@ async def redirect(short_url: str):
     if url:
         logger.info(f"[GET /] URL encontrada: {getattr(url, 'ID', None)}, {getattr(url, 'UrlOriginal', None)} -> {getattr(url, 'UrlShort', None)}")
         try:
-            redirect_url = f"https://{url.UrlOriginal}"
+            redirect_url = f"{url.UrlOriginal}"
+            controller.increment_access_db(short_url)
             return RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
         except Exception as e:
             logger.error(f"[GET /] Error al serializar la respuesta: {str(e)}", exc_info=True)

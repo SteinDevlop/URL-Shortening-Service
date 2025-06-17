@@ -16,6 +16,9 @@ app = APIRouter(prefix="/shorten", tags=["shorten"])
 async def create_url(
     Url: str = Form(...),
 ):
+    if Url.find("http://") == -1 and Url.find("https://") == -1:
+        logger.warning(f"[POST /create] URL inválida: {Url}")
+        raise HTTPException(400, detail="Invalid URL format. Must start with 'http://www.' or 'https://www.'")
     try:
         new_url = UrlCreate(
             UrlOriginal=Url,UpdateDate=datetime.datetime.now(), CreatedDate=datetime.datetime.now(),UrlShort=controller.generate_unique_code()

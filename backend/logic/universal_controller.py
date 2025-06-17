@@ -176,3 +176,12 @@ class UniversalController:
         fields = model.get_fields()
         data = {key: row[idx] for idx, key in enumerate(fields.keys())}
         return model(**data)
+
+    def increment_access_db(self,urlshort):
+        exec_sql = """
+        UPDATE urlaccess
+        SET TimesAccess = TimesAccess + 1
+        WHERE UrlID = (SELECT ID FROM url WHERE UrlShort = ?)
+        """
+        self.cursor.execute(exec_sql, (urlshort,))
+        self.conn.commit()
